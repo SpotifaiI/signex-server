@@ -1,1 +1,3 @@
-console.log(process.env);
+import { bootstrap } from './src/server.ts';
+
+bootstrap();
