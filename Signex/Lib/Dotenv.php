@@ -7,7 +7,7 @@
 
         private static function getContent(): array {
             if (empty(self::$content)) {
-                self::$content = parse_ini_file(SIGNEX_ROOT.'/../.env');
+                self::$content = parse_ini_file(SIGNEX_ROOT.'/.env');
             }
 
             return self::$content;
