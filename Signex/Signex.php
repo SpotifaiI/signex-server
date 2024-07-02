@@ -27,7 +27,7 @@
                     throw new \Exception('Método não encontrado!');
                 }
 
-                $response = (new $class())->$method($params);
+                $response = (new $class($params))->$method();
             } catch (\Exception $exception) {
                 $response->setOk(false)->setMessage($exception->getMessage());
             } finally {
