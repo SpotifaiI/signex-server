@@ -42,7 +42,7 @@ RUN echo '\nmemory_limit = -1\nmax_execution_time = 0\nupload_max_filesize = 32M
 RUN echo 'export PORT=${PORT}' >> /etc/apache2/envvars
 RUN echo 'export SERVER_NAME=${SERVER_NAME}' >> /etc/apache2/envvars
 
-# apache setup
+# apache _setup
 RUN echo 'ServerName "${SERVER_NAME}"' >> /etc/apache2/apache2.conf
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf
 RUN rm /etc/apache2/sites-enabled/000-default.conf
@@ -52,7 +52,7 @@ ENV PORT=80
 ENV CONFIG_FILE=''
 ENV SERVER_NAME='localhost'
 
-# entrypoint setup
+# entrypoint _setup
 RUN sed -i 's/env -i /env -i PORT=${PORT} SERVER_NAME=${SERVER_NAME} CONFIG_FILE=${CONFIG_FILE} /g' /etc/init.d/apache2
 RUN printf '#!/bin/bash\nset -e\n\n: "${APACHE_CONFDIR:=/etc/apache2}"\n: "${APACHE_ENVVARS:=$APACHE_CONFDIR/envvars}"\nif test -f "$APACHE_ENVVARS"; then\n  . "$APACHE_ENVVARS"\nfi\n\n: "${APACHE_RUN_DIR:=/var/run/apache2}"\n: "${APACHE_PID_FILE:=$APACHE_RUN_DIR/apache2.pid}"\nrm -f "$APACHE_PID_FILE"\n\nfor e in "${!APACHE_@}"; do\n  if [[ "$e" == *_DIR ]] && [[ "${!e}" == /* ]]; then\n    dir="${!e}"\n    while [ "$dir" != "$(dirname "$dir")" ]; do\n      dir="$(dirname "$dir")"\n      if [ -d "$dir" ]; then\n        break\n      fi\n      absDir="$(readlink -f "$dir" 2>/dev/null || :)"\n      if [ -n "$absDir" ]; then\n        mkdir -p "$absDir"\n      fi\n    done\n    mkdir -p "${!e}"\n  fi\ndone\nexec apache2 -DFOREGROUND "$@"' > ./usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
