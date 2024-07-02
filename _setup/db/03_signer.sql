@@ -1,14 +1,13 @@
-use signex;
+USE signex;
 
-create table if not exists signer
-(
-    id        int unsigned auto_increment
-        primary key,
-    sign      int unsigned                       null,
-    hash      varchar(200)                       null,
-    signed_at datetime default CURRENT_TIMESTAMP null,
-    email     varchar(100)                       null,
-    code      varchar(10)                        null,
-    constraint signer_sign_fk
-        foreign key (sign) references sign (id)
-);
+CREATE TABLE `signer` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `sign` int(10) unsigned DEFAULT NULL,
+  `hash` varchar(200) COLLATE utf8_bin DEFAULT NULL,
+  `signed_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `email` varchar(100) COLLATE utf8_bin DEFAULT NULL,
+  `code` varchar(10) COLLATE utf8_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `signer_sign_fk` (`sign`),
+  CONSTRAINT `signer_sign_fk` FOREIGN KEY (`sign`) REFERENCES `sign` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
