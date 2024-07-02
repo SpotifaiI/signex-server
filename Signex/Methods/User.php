@@ -4,10 +4,8 @@
 
     use Signex\Lib\Response;
 
-    class User {
+    class User extends Method {
         public function list(): Response {
-            $response = new Response();
-
-            return $response->setOk(true)->setMessage('deu bom!@');
+            return $this->response;
         }
     }
