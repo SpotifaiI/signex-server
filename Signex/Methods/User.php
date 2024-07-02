@@ -5,6 +5,7 @@
     use Signex\Lib\Database;
     use Signex\Lib\Dotenv;
     use Signex\Lib\Response;
+    use Signex\Lib\Str;
 
     class User extends Method {
         /**
@@ -21,10 +22,9 @@
             );
             $statement->bindValue('name', $this->body['name']);
             $statement->bindValue('email', $this->body['email']);
-            $statement->bindValue('password', crypt(
-                $this->body['password'],
-                Dotenv::get('CRYPT_SALT')
-            ));
+            $statement->bindValue(
+                'password', Str::crypt($this->body['password'])
+            );
             $statement->execute();
 
             $lastId = Database::getConnection()->lastInsertId();
