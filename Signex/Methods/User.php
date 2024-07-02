@@ -2,46 +2,54 @@
 
     namespace Signex\Methods;
 
-    use Signex\Lib\Database;
-    use Signex\Lib\Dotenv;
+    use Exception;
+    use Signex\Data\User as UserModel;
     use Signex\Lib\Response;
-    use Signex\Lib\Str;
 
     class User extends Method {
+        private UserModel $user;
+
+        public function __construct(array $params) {
+            parent::__construct($params);
+
+            $this->user = new UserModel();
+        }
+
         /**
-         * @throws \Exception
+         * @throws Exception
          */
         public function create(): Response {
-            $this->validate(['name', 'email', 'password']);
+            try {
+                $this->validate(['name', 'email', 'password']);
 
-            $statement = Database::getConnection()->prepare(
-                "INSERT IGNORE INTO user
-                SET name=:name, 
-                    email=:email, 
-                    password=:password"
-            );
-            $statement->bindValue('name', $this->body['name']);
-            $statement->bindValue('email', $this->body['email']);
-            $statement->bindValue(
-                'password', Str::crypt($this->body['password'])
-            );
-            $statement->execute();
+                $userExists = $this->user->getByEmail($this->body['email']);
 
-            $lastId = Database::getConnection()->lastInsertId();
+                if (!empty($userExists)) {
+                    throw new Exception(sprintf(
+                        "Já existe um usuário cadastrado com o e-mail %s",
+                        $this->body['email']
+                    ));
+                }
 
-            if (!empty($lastId)) {
+                $userId = $this->user->add($this->body);
+
+                if (empty($userId)) {
+                    throw new Exception(
+                        'Ocorreu um erro e não foi possível criar o usuário.'
+                    );
+                }
+
                 $this->response
                     ->setOk(true)
                     ->setMessage('Usuário criado com sucesso!')
                     ->setData([
-                        'user' => $lastId
+                        'user' => $userId
                     ]);
-            } else {
-                $this->response
-                    ->setOk(false)
-                    ->setMessage('Ocorreu um erro e não foi possível criar o usuário.');
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
             }
-
-            return $this->response;
         }
     }
