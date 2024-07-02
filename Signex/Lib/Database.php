@@ -14,7 +14,10 @@
                 $dbPort = Dotenv::get('DB_PORT');
 
                 self::$connection = new PDO(
-                    "mysql:host={$host};port={$dbPort};dbname={$dbName}",
+                    sprintf(
+                        "mysql:host=%s;port=%s;dbname=%s;charset=utf8",
+                        $host, $dbPort, $dbName
+                    ),
                     Dotenv::get('DB_USER'),
                     Dotenv::get('DB_PASS')
                 );
