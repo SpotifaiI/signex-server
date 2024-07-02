@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS signex
+    CHARACTER SET utf8
+    COLLATE utf8_bin;
+
+USE signex;
