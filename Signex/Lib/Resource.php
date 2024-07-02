@@ -30,8 +30,14 @@
         private function clean(): Resource {
             $sortRoute = [];
 
-            foreach ($this->routes as $route) {
+            foreach ($this->routes as $indexRoute => $route) {
                 if (!empty($route)) {
+                    $route = trim($route);
+
+                    if ($indexRoute === 0) {
+                        $route = ucfirst($route);
+                    }
+
                     $sortRoute[] = $route;
                 }
             }

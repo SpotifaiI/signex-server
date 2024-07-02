@@ -2,21 +2,36 @@
 
     namespace Signex;
 
+    use Signex\Lib\Publisher;
     use Signex\Lib\Response;
     use Signex\Lib\Router;
 
     class Signex {
         public function start(): void {
+            $response = new Response();
+
             try {
                 $router = new Router();
 
-                print_r($router->resource());
+                $class = $router->resource()->module;
+                $method = $router->resource()->method;
+                $params = $router->resource()->params;
+
+                $class = "\Signex\Methods\\$class";
+
+                if (!class_exists($class)) {
+                    throw new \Exception('Módulo não encontrado!');
+                }
+
+                if (!method_exists($class, $method)) {
+                    throw new \Exception('Método não encontrado!');
+                }
+
+                $response = (new $class())->$method($params);
             } catch (\Exception $exception) {
-                Response::setOk(false);
-                Response::setMessage($exception->getMessage());
+                $response->setOk(false)->setMessage($exception->getMessage());
             } finally {
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(Response::build());
+                (new Publisher($response))->echo();
             }
         }
     }

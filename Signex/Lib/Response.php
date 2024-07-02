@@ -3,34 +3,40 @@
     namespace Signex\Lib;
 
     class Response {
-        private static bool $isOk = false;
-        private static string $message = '';
-        private static ?array $data = null;
+        private bool $isOk = false;
+        private string $message = '';
+        private ?array $data = null;
 
-        public static function build(): array {
+        public function build(): array {
             $response = [
-                'ok' => self::$isOk,
-                'message' => self::$message,
+                'ok' => $this->isOk,
+                'message' => $this->message,
             ];
 
-            if (!is_null(self::$data)) {
-                $response['data'] = self::$data;
+            if (!is_null($this->data)) {
+                $response['data'] = $this->data;
             }
 
             return $response;
         }
 
-        public static function setOk(bool $isOk): void {
-            self::$isOk = $isOk;
-            self::$data = null;
+        public function setOk(bool $isOk): Response {
+            $this->isOk = $isOk;
+            $this->data = null;
+
+            return $this;
         }
 
-        public static function setMessage(string $message): void {
-            self::$message = $message;
-            self::$data = null;
+        public function setMessage(string $message): Response {
+            $this->message = $message;
+            $this->data = null;
+
+            return $this;
         }
 
-        public static function setData(array $data): void {
-            self::$data = $data;
+        public function setData(array $data): Response {
+            $this->data = $data;
+
+            return $this;
         }
     }
