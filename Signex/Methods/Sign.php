@@ -39,11 +39,19 @@
                     "public/%s.%s",
                     $upload->name, $upload->extension
                 );
+                $content = file_get_contents($upload->path);
 
-                file_put_contents(
-                    $newFilePath,
-                    file_get_contents($upload->path)
-                );
+                file_put_contents($newFilePath, $content);
+
+                $signId = $this->sign->add($userId, [
+                    'content' => $content,
+                    'file' => $newFilePath
+                ]);
+                $signers = $this->sign->sign($signId, $emails);
+
+                $this->response->setOk(true)
+                    ->setMessage('Assinatura criada com sucesso.')
+                    ->setData([$signId => $signers]);
             } catch (Exception $exception) {
                 $this->response->setOk(false)
                     ->setMessage($exception->getMessage());
