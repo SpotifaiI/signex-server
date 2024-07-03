@@ -5,6 +5,7 @@
     use Exception;
     use Signex\Data\User as UserModel;
     use Signex\Lib\Response;
+    use Signex\Lib\Str;
 
     class User extends Method {
         private UserModel $user;
@@ -15,9 +16,6 @@
             $this->user = new UserModel();
         }
 
-        /**
-         * @throws Exception
-         */
         public function create(): Response {
             try {
                 $this->validate(['name', 'email', 'password']);
@@ -44,6 +42,48 @@
                     ->setMessage('Usuário criado com sucesso!')
                     ->setData([
                         'user' => $userId
+                    ]);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
+        public function login(): Response {
+            try {
+                $this->validate(['email', 'password']);
+
+                $userExists = $this->user->getByEmail($this->body['email']);
+
+                $validUser = [];
+                foreach ($userExists as $user) {
+                    if (Str::worth(
+                        $this->body['password'], $user['password']
+                    )) {
+                        $validUser = $user;
+
+                        break;
+                    }
+                }
+
+                if (empty($validUser)) {
+                    throw new Exception('Usuário ou senha inválidos!');
+                }
+
+                $token = Str::crypt(
+                    $this->user->buildToken($validUser['id'])
+                );
+
+                $this->response
+                    ->setOk(true)
+                    ->setMessage('Usuário logado com sucesso!')
+                    ->setData([
+                        'token' => $token,
+                        'user' => $validUser['id'],
+                        'email' => $validUser['email'],
+                        'name' => $validUser['name']
                     ]);
             } catch (Exception $exception) {
                 $this->response->setOk(false)

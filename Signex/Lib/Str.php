@@ -8,4 +8,8 @@
                 'cost' => 12,
             ]);
         }
+
+        public static function worth(string $text, string $hash): bool {
+            return password_verify($text, $hash);
+        }
     }

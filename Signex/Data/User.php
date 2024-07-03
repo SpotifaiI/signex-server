@@ -2,6 +2,7 @@
 
     namespace Signex\Data;
 
+    use PDO;
     use Signex\Lib\Database;
     use Signex\Lib\Str;
 
@@ -12,7 +13,7 @@
             }
 
             $statement = Database::getConnection()->prepare(
-                "SELECT id
+                "SELECT id, password, name, email
                 FROM user
                 WHERE email = :email"
             );
@@ -20,7 +21,7 @@
             $statement->execute();
 
             $results = [];
-            while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
                 $results[] = $row;
             }
 
@@ -50,5 +51,22 @@
             $statement->execute();
 
             return (int) Database::getConnection()->lastInsertId();
+        }
+
+        public function buildToken(int $id): string {
+            $statement = Database::getConnection()->prepare(
+                "SELECT id, created_at
+                FROM user
+                WHERE id = :id"
+            );
+            $statement->bindValue('id', $id);
+            $statement->execute();
+
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+            return sprintf(
+                "%d-%s",
+                $result['id'], $result['created_at']
+            );
         }
     }
