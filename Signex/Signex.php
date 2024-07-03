@@ -8,6 +8,8 @@
 
     class Signex {
         public function start(): void {
+            Publisher::standup();
+
             $response = new Response();
 
             try {
