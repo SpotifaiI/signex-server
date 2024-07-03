@@ -39,6 +39,11 @@
                     "public/%s.%s",
                     $upload->name, $upload->extension
                 );
+
+                file_put_contents(
+                    $newFilePath,
+                    file_get_contents($upload->path)
+                );
             } catch (Exception $exception) {
                 $this->response->setOk(false)
                     ->setMessage($exception->getMessage());
