@@ -18,8 +18,9 @@
             protected readonly array $params
         ) {
             $this->response = new Response();
-            $this->body = Body::get();
-            $this->form = Body::form();
+            $this->body = (empty(Body::get()) && !empty(Body::form()))
+                ? Body::form()
+                : Body::get();
             $this->files = Body::files();
         }
 
@@ -58,6 +59,11 @@
 
             $user = new UserModel();
             $userToken = $user->buildToken($userId);
-            $validToken = Str::worth($userToken, $token);
+
+            if (!Str::worth($userToken, $token)) {
+                throw new Exception(
+                    'Token de autenticação expirado ou inválido.'
+                );
+            }
         }
     }

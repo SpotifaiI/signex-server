@@ -3,17 +3,23 @@
     namespace Signex\Lib;
 
     class File {
-        public static function upload(array $fileMeta) {
+        public static function upload(array $fileMeta): Upload {
+            $random = Str::random(32);
+            $extension = self::getExtension($fileMeta['type']);
             $newPath = sprintf(
                 "%s/%s.%s",
                 self::tmpPath(),
-                $fileMeta['name'],
-                self::getExtension($fileMeta['type'])
+                $random,
+
             );
 
             move_uploaded_file($fileMeta['tmp_name'], $newPath);
 
-            return $newPath;
+            return new Upload(
+                $random,
+                $newPath,
+                $extension
+            );
         }
 
         private static function tmpPath(): string {
