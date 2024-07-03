@@ -3,6 +3,14 @@
     namespace Signex\Lib;
 
     class Body {
+        public static function form(): array {
+            return $_POST ?? [];
+        }
+
+        public static function files(): array {
+            return $_FILES ?? [];
+        }
+
         public static function get(): array {
             $content = json_decode(self::search(), true);
 
