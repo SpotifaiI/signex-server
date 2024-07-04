@@ -38,12 +38,12 @@
 
                 $upload = File::upload($this->files['file']);
                 $newFilePath = sprintf(
-                    "public/%s.%s",
+                    "%s.%s",
                     $upload->name, $upload->extension
                 );
                 $content = file_get_contents($upload->path);
 
-                file_put_contents(SIGNEX_ROOT.'/'.$newFilePath, $content);
+                file_put_contents(SIGNEX_ROOT.'/public/'.$newFilePath, $content);
 
                 $signId = $this->sign->add($userId, [
                     'content' => $content,
