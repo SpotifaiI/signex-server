@@ -43,7 +43,7 @@
                 );
                 $content = file_get_contents($upload->path);
 
-                file_put_contents($newFilePath, $content);
+                file_put_contents(SIGNEX_ROOT.'/'.$newFilePath, $content);
 
                 $signId = $this->sign->add($userId, [
                     'content' => $content,
@@ -78,7 +78,7 @@
                 $signUrl = sprintf(
                     "%s/sign/%s",
                     Dotenv::get('WEBVIEW_ENDPOINT'),
-                    $mailInfo['hash']
+                    urlencode($mailInfo['hash'])
                 );
                 $message = '<a href="'.$signUrl.'">Clique aqui</a> '.
                     'para assinar o documento usando o código '.

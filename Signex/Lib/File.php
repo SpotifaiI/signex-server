@@ -10,7 +10,7 @@
                 "%s/%s.%s",
                 self::tmpPath(),
                 $random,
-
+                $extension
             );
 
             move_uploaded_file($fileMeta['tmp_name'], $newPath);
