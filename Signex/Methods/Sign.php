@@ -18,6 +18,35 @@
             $this->sign = new SignModel();
         }
 
+        public function list(): Response {
+            try {
+                $userId = $this->params[0] ?? null;
+
+                if (empty($userId)) {
+                    throw new Exception(
+                        'Parâmetro de ID do usuário faltando na URL.'
+                    );
+                }
+
+                $this->validate(['token']);
+                $this->authenticate($this->body['token'], $userId);
+
+                $signs = $this->sign->getByUser($userId);
+
+                $this->response->setOk(true)
+                    ->setMessage(sprintf(
+                        "Assinaturas do usuário %d listadas com sucesso.",
+                        $userId
+                    ))
+                    ->setData($signs);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
         public function add(): Response {
             try {
                 $userId = $this->params[0] ?? null;

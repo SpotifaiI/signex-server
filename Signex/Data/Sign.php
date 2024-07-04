@@ -83,4 +83,56 @@
 
             return $signers;
         }
+        
+        public function getByUser(int $userId): array {
+            if (empty($userId)) {
+                return [];
+            }
+
+            $signs = [];
+
+            $statement = Database::getConnection()->prepare(
+                "SELECT hash, file, id
+                FROM sign
+                WHERE user = :user"
+            );
+            $statement->bindValue('user', $userId);
+            $statement->execute();
+
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $signs[] = $row;
+            }
+
+            foreach ($signs as &$sign) {
+                $sign['signers'] = $this->listSigners($sign['id']);
+            }
+
+            return $signs;
+        }
+
+        private function listSigners(int $signId): array {
+            if (empty($signId)) {
+                return [];
+            }
+
+            $signers = [];
+
+            $statement = Database::getConnection()->prepare(
+                "SELECT email, (
+                    CASE
+                        WHEN hash IS NOT NULL THEN '1'
+                    END
+                ) is_signed
+                FROM signer
+                WHERE sign = :sign"
+            );
+            $statement->bindValue('sign', $signId);
+            $statement->execute();
+
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $signers[] = $row;
+            }
+
+            return $signers;
+        }
     }
