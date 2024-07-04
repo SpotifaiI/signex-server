@@ -125,4 +125,29 @@
                 );
             }
         }
+        
+        public function remove(): Response {
+            try {
+                $signId = $this->params[0] ?? null;
+
+                if (empty($signId)) {
+                    throw new Exception(
+                        'Parâmetro de ID da assinatura faltando na URL.'
+                    );
+                }
+
+                $this->validate(['token', 'user']);
+                $this->authenticate($this->body['token'], $this->body['user']);
+                
+                $this->sign->delete((int) $signId);
+
+                $this->response->setOk(true)
+                    ->setMessage('Assinatura removida com sucesso.');
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
     }

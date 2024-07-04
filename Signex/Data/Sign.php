@@ -110,6 +110,22 @@
             return $signs;
         }
 
+        public function delete(int $signId): void {
+            $statement = Database::getConnection()->prepare(
+                "DELETE FROM signer
+                WHERE sign = :sign"
+            );
+            $statement->bindValue('sign', $signId);
+            $statement->execute();
+
+            $statement = Database::getConnection()->prepare(
+                "DELETE FROM sign
+                WHERE id = :sign"
+            );
+            $statement->bindValue('sign', $signId);
+            $statement->execute();
+        }
+
         private function listSigners(int $signId): array {
             if (empty($signId)) {
                 return [];
