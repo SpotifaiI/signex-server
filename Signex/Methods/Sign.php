@@ -105,9 +105,10 @@
 
             foreach ($mailInfoList as $mailInfo) {
                 $signUrl = sprintf(
-                    "%s/sign/%s",
+                    "%s/sign/%s/%d",
                     Dotenv::get('WEBVIEW_ENDPOINT'),
-                    urlencode($mailInfo['hash'])
+                    urlencode($mailInfo['hash']),
+                    $mailInfo['signer']
                 );
                 $message = '<a href="'.$signUrl.'">Clique aqui</a> '.
                     'para assinar o documento usando o código '.
