@@ -151,4 +151,72 @@
 
             return $signers;
         }
+
+        public function getFileForSign(
+            int $signerId,
+            string $hash
+        ): array {
+            $signs = [];
+
+            $statement = Database::getConnection()->prepare(
+                "SELECT sign.file, (
+                    CASE
+                        WHEN signer.hash IS NOT NULL THEN '1'
+                    END
+                ) is_signed
+                FROM signer
+                LEFT JOIN sign ON sign.id = signer.sign
+                WHERE signer.id = :signer
+                    AND sign.hash = :hash"
+            );
+            $statement->bindValue('signer', $signerId);
+            $statement->bindValue('hash', $hash);
+            $statement->execute();
+
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $signs[] = $row;
+            }
+
+            return $signs;
+        }
+
+        public function verify(
+            int $signerId,
+            string $code
+        ): array {
+            $signs = [];
+
+            $statement = Database::getConnection()->prepare(
+                "SELECT signer.id
+                FROM signer
+                WHERE signer.id = :signer
+                    AND signer.code = :code"
+            );
+            $statement->bindValue('signer', $signerId);
+            $statement->bindValue('code', $code);
+            $statement->execute();
+
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $signs[] = $row;
+            }
+
+            return $signs;
+        }
+
+        public function finish(int $signerId): bool {
+            $statement = Database::getConnection()->prepare(
+                "UPDATE signer
+                SET hash = :hash, 
+                    signed_at = :signed_at
+                WHERE id = :id"
+            );
+            $statement->bindValue('hash', Str::crypt(sprintf(
+                "%d-%s",
+                $signerId, Time::moment()
+            )));
+            $statement->bindValue('signed_at', Time::now());
+            $statement->bindValue('id', $signerId);
+
+            return $statement->execute();
+        }
     }

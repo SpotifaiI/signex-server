@@ -151,4 +151,51 @@
                 return $this->response;
             }
         }
+
+        public function search(): Response {
+            try {
+                $this->validate(['hash', 'signer_id']);
+
+                $signs = $this->sign->getFileForSign(
+                    (int) $this->body['signer_id'],
+                    $this->body['hash']
+                );
+
+                $this->response->setOk(true)
+                    ->setMessage('Assinaturas buscadas com sucesso.')
+                    ->setData($signs[0] ?? null);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
+        public function finish(): Response {
+            try {
+                $this->validate(['code', 'signer_id']);
+
+                $verification = $this->sign->verify(
+                    (int) $this->body['signer_id'],
+                    $this->body['code']
+                );
+
+                if (empty($verification)) {
+                    throw new Exception(sprintf(
+                        "Código %s é inválido.",
+                        $this->body['code']
+                    ));
+                }
+
+                $this->response
+                    ->setOk($this->sign->finish((int) $this->body['signer_id']))
+                    ->setMessage('Assinatura finalizada com sucesso.');
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
     }
