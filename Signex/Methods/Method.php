@@ -45,7 +45,7 @@
          * @throws Exception
          */
         protected function authenticate(string $token, int $userId): void {
-            if (empty($user)) {
+            if (empty($userId)) {
                 throw new Exception(
                     'Usuário relacionado não identificado.'
                 );

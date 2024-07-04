@@ -1,4 +1,6 @@
 .vscode/
 .idea/
 
+public/*.pdf
+
 .env

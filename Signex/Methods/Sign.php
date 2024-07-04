@@ -3,7 +3,9 @@
     namespace Signex\Methods;
 
     use Exception;
+    use Signex\Data\Mail;
     use Signex\Data\Sign as SignModel;
+    use Signex\Lib\Dotenv;
     use Signex\Lib\File;
     use Signex\Lib\Response;
 
@@ -14,6 +16,35 @@
             parent::__construct($params);
 
             $this->sign = new SignModel();
+        }
+
+        public function list(): Response {
+            try {
+                $userId = $this->params[0] ?? null;
+
+                if (empty($userId)) {
+                    throw new Exception(
+                        'Parâmetro de ID do usuário faltando na URL.'
+                    );
+                }
+
+                $this->validate(['token']);
+                $this->authenticate($this->body['token'], $userId);
+
+                $signs = $this->sign->getByUser($userId);
+
+                $this->response->setOk(true)
+                    ->setMessage(sprintf(
+                        "Assinaturas do usuário %d listadas com sucesso.",
+                        $userId
+                    ))
+                    ->setData($signs);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
         }
 
         public function add(): Response {
@@ -36,22 +67,130 @@
 
                 $upload = File::upload($this->files['file']);
                 $newFilePath = sprintf(
-                    "public/%s.%s",
+                    "%s.%s",
                     $upload->name, $upload->extension
                 );
                 $content = file_get_contents($upload->path);
 
-                file_put_contents($newFilePath, $content);
+                file_put_contents(SIGNEX_ROOT.'/public/'.$newFilePath, $content);
 
                 $signId = $this->sign->add($userId, [
                     'content' => $content,
                     'file' => $newFilePath
                 ]);
-                $signers = $this->sign->sign($signId, $emails);
+                if (!empty($signId)) {
+                    $signers = $this->sign->sign($signId, $emails);
+
+                    $this->sendAlerts($signers);
+                }
 
                 $this->response->setOk(true)
                     ->setMessage('Assinatura criada com sucesso.')
                     ->setData([$signId => $signers]);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
+        /**
+         * @param int[] $signersIds
+         */
+        private function sendAlerts(array $signersIds): void {
+            $mail = new Mail();
+            $mailInfoList = $this->sign->getToSign($signersIds);
+            $headers = "From: sign@signex.com" . "\r\n";
+
+            foreach ($mailInfoList as $mailInfo) {
+                $signUrl = sprintf(
+                    "%s/sign/%s/%d",
+                    Dotenv::get('WEBVIEW_ENDPOINT'),
+                    urlencode($mailInfo['hash']),
+                    $mailInfo['signer']
+                );
+                $message = '<a href="'.$signUrl.'">Clique aqui</a> '.
+                    'para assinar o documento usando o código '.
+                    '<b>'.$mailInfo['code'].'</b>';
+
+                $mail->add([
+                    'email' => $mailInfo['email'],
+                    'message' => $message
+                ]);
+                mail(
+                    $mailInfo['email'],
+                    'Assinatura de documento',
+                    $message,
+                    $headers
+                );
+            }
+        }
+        
+        public function remove(): Response {
+            try {
+                $signId = $this->params[0] ?? null;
+
+                if (empty($signId)) {
+                    throw new Exception(
+                        'Parâmetro de ID da assinatura faltando na URL.'
+                    );
+                }
+
+                $this->validate(['token', 'user']);
+                $this->authenticate($this->body['token'], $this->body['user']);
+                
+                $this->sign->delete((int) $signId);
+
+                $this->response->setOk(true)
+                    ->setMessage('Assinatura removida com sucesso.');
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
+        public function search(): Response {
+            try {
+                $this->validate(['hash', 'signer_id']);
+
+                $signs = $this->sign->getFileForSign(
+                    (int) $this->body['signer_id'],
+                    $this->body['hash']
+                );
+
+                $this->response->setOk(true)
+                    ->setMessage('Assinaturas buscadas com sucesso.')
+                    ->setData($signs[0] ?? null);
+            } catch (Exception $exception) {
+                $this->response->setOk(false)
+                    ->setMessage($exception->getMessage());
+            } finally {
+                return $this->response;
+            }
+        }
+
+        public function finish(): Response {
+            try {
+                $this->validate(['code', 'signer_id']);
+
+                $verification = $this->sign->verify(
+                    (int) $this->body['signer_id'],
+                    $this->body['code']
+                );
+
+                if (empty($verification)) {
+                    throw new Exception(sprintf(
+                        "Código %s é inválido.",
+                        $this->body['code']
+                    ));
+                }
+
+                $this->response
+                    ->setOk($this->sign->finish((int) $this->body['signer_id']))
+                    ->setMessage('Assinatura finalizada com sucesso.');
             } catch (Exception $exception) {
                 $this->response->setOk(false)
                     ->setMessage($exception->getMessage());
