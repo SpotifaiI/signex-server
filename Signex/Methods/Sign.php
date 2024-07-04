@@ -3,7 +3,9 @@
     namespace Signex\Methods;
 
     use Exception;
+    use Signex\Data\Mail;
     use Signex\Data\Sign as SignModel;
+    use Signex\Lib\Dotenv;
     use Signex\Lib\File;
     use Signex\Lib\Response;
 
@@ -47,7 +49,11 @@
                     'content' => $content,
                     'file' => $newFilePath
                 ]);
-                $signers = $this->sign->sign($signId, $emails);
+                if (!empty($signId)) {
+                    $signers = $this->sign->sign($signId, $emails);
+
+                    $this->sendAlerts($signers);
+                }
 
                 $this->response->setOk(true)
                     ->setMessage('Assinatura criada com sucesso.')
@@ -57,6 +63,37 @@
                     ->setMessage($exception->getMessage());
             } finally {
                 return $this->response;
+            }
+        }
+
+        /**
+         * @param int[] $signersIds
+         */
+        private function sendAlerts(array $signersIds): void {
+            $mail = new Mail();
+            $mailInfoList = $this->sign->getToSign($signersIds);
+            $headers = "From: sign@signex.com" . "\r\n";
+
+            foreach ($mailInfoList as $mailInfo) {
+                $signUrl = sprintf(
+                    "%s/sign/%s",
+                    Dotenv::get('WEBVIEW_ENDPOINT'),
+                    $mailInfo['hash']
+                );
+                $message = '<a href="'.$signUrl.'">Clique aqui</a> '.
+                    'para assinar o documento usando o código '.
+                    '<b>'.$mailInfo['code'].'</b>';
+
+                $mail->add([
+                    'email' => $mailInfo['email'],
+                    'message' => $message
+                ]);
+                mail(
+                    $mailInfo['email'],
+                    'Assinatura de documento',
+                    $message,
+                    $headers
+                );
             }
         }
     }

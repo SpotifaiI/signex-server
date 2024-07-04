@@ -2,6 +2,7 @@
 
     namespace Signex\Data;
 
+    use PDO;
     use Signex\Lib\Database;
     use Signex\Lib\Str;
     use Signex\Lib\Time;
@@ -51,5 +52,35 @@
             }
 
             return $ids;
+        }
+
+        /**
+         * @param array<int, int> $signersIds
+         * @return array<int, array{
+         *  signer: int,
+         *  email: string,
+         *  hash: string,
+         *  code: string
+         * }>
+         */
+        public function getToSign(array $signersIds): array {
+            $signers = [];
+
+            $signersIdsIn = implode(',', $signersIds);
+
+            $statement = Database::getConnection()->prepare(
+                "SELECT signer.id signer, signer.email, sign.hash,
+                        signer.code
+                FROM signer
+                LEFT JOIN sign on sign.id = signer.sign
+                WHERE signer.id IN ({$signersIdsIn})"
+            );
+            $statement->execute();
+            
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $signers[] = $row;
+            }
+
+            return $signers;
         }
     }
